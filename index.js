@@ -61,10 +61,11 @@ app.post("/api/users/:_id/exercises", (req, res) => {
   if (!user) return res.status(404).json({ error: "User not found" });
 
   const exerciseDate = date ? new Date(date) : new Date();
+  const formattedDate = exerciseDate.toDateString();
   const exercise = {
     description,
     duration: parseInt(duration),
-    date: exerciseDate.toDateString(),
+    date: formattedDate,
   };
 
   user.log.push(exercise);
@@ -86,19 +87,24 @@ app.get("/api/users/:_id/logs", (req, res) => {
   const user = userLogs.find((u) => u._id === _id);
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  let logs = [...user.log];
+  let logs = [...user.log]; // Clone log
 
-  // Optional filtering
+  // ✅ Filter by date range
   if (from) {
     const fromDate = new Date(from);
-    logs = logs.filter((entry) => new Date(entry.date) >= fromDate);
+    if (!isNaN(fromDate)) {
+      logs = logs.filter((entry) => new Date(entry.date) >= fromDate);
+    }
   }
 
   if (to) {
     const toDate = new Date(to);
-    logs = logs.filter((entry) => new Date(entry.date) <= toDate);
+    if (!isNaN(toDate)) {
+      logs = logs.filter((entry) => new Date(entry.date) <= toDate);
+    }
   }
 
+  // ✅ Apply limit
   if (limit) {
     logs = logs.slice(0, parseInt(limit));
   }
@@ -107,7 +113,11 @@ app.get("/api/users/:_id/logs", (req, res) => {
     username: user.username,
     count: logs.length,
     _id: user._id,
-    log: logs,
+    log: logs.map((entry) => ({
+      description: entry.description,
+      duration: entry.duration,
+      date: entry.date, // assumed already formatted with .toDateString()
+    })),
   });
 });
 

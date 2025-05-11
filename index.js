@@ -34,7 +34,7 @@ app.post("/api/users", (req, res) => {
     log: [],
   });
   // Save user to database or perform other actions
-  res.status(201).json({ username: username, _id });
+  res.json({ username: username, _id });
 });
 
 // ✅ Get all users
@@ -61,11 +61,10 @@ app.post("/api/users/:_id/exercises", (req, res) => {
   if (!user) return res.status(404).json({ error: "User not found" });
 
   const exerciseDate = date ? new Date(date) : new Date();
-  const formattedDate = exerciseDate.toDateString();
   const exercise = {
     description,
     duration: parseInt(duration),
-    date: formattedDate,
+    date: exerciseDate, // store as Date object for filtering
   };
 
   user.log.push(exercise);
@@ -93,14 +92,14 @@ app.get("/api/users/:_id/logs", (req, res) => {
   if (from) {
     const fromDate = new Date(from);
     if (!isNaN(fromDate)) {
-      logs = logs.filter((entry) => new Date(entry.date) >= fromDate);
+      logs = logs.filter((entry) => entry.date >= fromDate);
     }
   }
 
   if (to) {
     const toDate = new Date(to);
     if (!isNaN(toDate)) {
-      logs = logs.filter((entry) => new Date(entry.date) <= toDate);
+      logs = logs.filter((entry) => entry.date <= toDate);
     }
   }
 
@@ -116,7 +115,7 @@ app.get("/api/users/:_id/logs", (req, res) => {
     log: logs.map((entry) => ({
       description: entry.description,
       duration: entry.duration,
-      date: entry.date, // assumed already formatted with .toDateString()
+      date: entry.date.toDateString(), // format it here only
     })),
   });
 });
